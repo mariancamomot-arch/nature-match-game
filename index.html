@@ -54,7 +54,7 @@ button {
 
 <h1>🌿 Nature Memory Match</h1>
 
-<button onclick="startGameAudio()">🔊 Start Sound</button>
+<button onclick="startSound()">🔊 Start Sound</button>
 
 <div class="panel">
   <p>Level: <span id="level">1</span></p>
@@ -74,127 +74,123 @@ button {
 <audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
 <script>
-const items=["🌊","🌳","🌸","🍀","🌼","🌵"];
-let grid=[],revealed=[],selected=[];
-let level=1,count=0,lives=5,mistakes=0;
-let timer=3,interval;
+const items = ["🌊","🌳","🌸","🍀","🌼","🌵"];
+let grid = [], revealed = [], selected = [];
 
-// audio
-let music,clickS,matchS,wrongS;
+let level = 1, count = 0, lives = 5;
+let timer = 3, interval;
 
-function startGameAudio(){
-  music=document.getElementById("bgMusic");
-  clickS=document.getElementById("clickSound");
-  matchS=document.getElementById("matchSound");
-  wrongS=document.getElementById("wrongSound");
+let music, clickS, matchS, wrongS;
 
-  music.volume=0.3;
+function startSound() {
+  music = document.getElementById("bgMusic");
+  clickS = document.getElementById("clickSound");
+  matchS = document.getElementById("matchSound");
+  wrongS = document.getElementById("wrongSound");
+
+  music.volume = 0.3;
   music.play();
 }
 
-function createGrid(){
-  const g=document.getElementById("grid");
-  g.innerHTML="";
-  grid=[]; revealed=[]; selected=[];
+function createGrid() {
+  const g = document.getElementById("grid");
+  g.innerHTML = "";
+  grid = []; revealed = []; selected = [];
 
-  for(let i=0;i<25;i++){
-    grid.push(items[Math.floor(Math.random()*items.length)]);
+  for (let i = 0; i < 25; i++) {
+    grid.push(items[Math.floor(Math.random() * items.length)]);
     revealed.push(false);
 
-    let cell=document.createElement("div");
-    cell.className="cell";
-    cell.innerText="⬜";
-    cell.onclick=()=>clickCell(i);
+    let cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerText = "⬜";
+    cell.onclick = () => clickCell(i);
 
     g.appendChild(cell);
   }
 }
 
-function startTimer(){
-  timer=3;
-  document.getElementById("timer").innerText=timer;
+function startTimer() {
+  timer = 3;
+  document.getElementById("timer").innerText = timer;
 
-  interval=setInterval(()=>{
+  interval = setInterval(() => {
     timer--;
-    document.getElementById("timer").innerText=timer;
+    document.getElementById("timer").innerText = timer;
 
-    if(timer===0){
+    if (timer === 0) {
       clearInterval(interval);
       wrongS.play();
       loseLife();
       reset();
     }
-  },1000);
+  }, 1000);
 }
 
-function clickCell(i){
-  if(!clickS) return;
+function clickCell(i) {
+  if (!clickS) return;
 
-  const cells=document.querySelectorAll(".cell");
-  if(revealed[i]) return;
+  const cells = document.querySelectorAll(".cell");
+  if (revealed[i]) return;
 
   clickS.play();
 
-  if(selected.length===0) startTimer();
+  if (selected.length === 0) startTimer();
 
-  revealed[i]=true;
-  cells[i].innerText=grid[i];
+  revealed[i] = true;
+  cells[i].innerText = grid[i];
   selected.push(i);
 
-  if(selected.length===3){
+  if (selected.length === 3) {
     clearInterval(interval);
     check();
   }
 }
 
-function check(){
-  const [a,b,c]=selected;
+function check() {
+  const [a, b, c] = selected;
 
-  if(grid[a]===grid[b] && grid[a]===grid[c]){
+  if (grid[a] === grid[b] && grid[a] === grid[c]) {
     matchS.play();
     count++;
-    document.getElementById("count").innerText=count;
+    document.getElementById("count").innerText = count;
   } else {
     wrongS.play();
-    mistakes++;
     loseLife();
   }
 
-  setTimeout(reset,500);
+  setTimeout(reset, 500);
 
-  if(count>=12){
-    nextLevel();
-  }
+  if (count >= 12) nextLevel();
 }
 
-function reset(){
-  const cells=document.querySelectorAll(".cell");
-  selected.forEach(i=>{
-    revealed[i]=false;
-    cells[i].innerText="⬜";
+function reset() {
+  const cells = document.querySelectorAll(".cell");
+  selected.forEach(i => {
+    revealed[i] = false;
+    cells[i].innerText = "⬜";
   });
-  selected=[];
+  selected = [];
 }
 
-function loseLife(){
+function loseLife() {
   lives--;
-  document.getElementById("lives").innerText="❤️".repeat(lives);
+  document.getElementById("lives").innerText = "❤️".repeat(lives);
 
-  if(lives<=0){
+  if (lives <= 0) {
     alert("💀 Game Over");
     location.reload();
   }
 }
 
-function nextLevel(){
+function nextLevel() {
   level++;
-  count=0;
-  mistakes=0;
+  count = 0;
 
-  document.getElementById("level").innerText=level;
-  document.getElementById("count").innerText=count;
+  document.getElementById("level").innerText = level;
+  document.getElementById("count").innerText = count;
 
-  if(level>100){
+  if (level > 100) {
     alert("🏆 You finished Level 100!");
     location.reload();
     return;
