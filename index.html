@@ -1,117 +1,207 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Nature Match Game</title>
+<title>Nature Memory Match</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-  body {
-    font-family: Arial;
-    text-align: center;
-    background: #e6f7ff;
-  }
+body {
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to bottom, #a8e6cf, #dcedc1);
+  margin: 0;
+}
 
-  h1 { margin-top: 20px; }
+h1 { font-size: 22px; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(5, 60px);
-    gap: 5px;
-    justify-content: center;
-    margin-top: 20px;
-  }
+button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
+  border: none;
+  background: #4caf50;
+  color: white;
+}
 
-  .cell {
-    width: 60px;
-    height: 60px;
-    font-size: 30px;
-    background: white;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.panel {
+  background: white;
+  padding: 10px;
+  border-radius: 15px;
+  margin: 10px;
+}
 
-  .selected {
-    background: yellow;
-  }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  padding: 10px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  font-size: 28px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🌿 Nature Match Game</h1>
-<p>Score: <span id="score">0</span></p>
+<h1>🌿 Nature Memory Match</h1>
+
+<button onclick="startGameAudio()">🔊 Start Sound</button>
+
+<div class="panel">
+  <p>Level: <span id="level">1</span></p>
+  <p>Matches: <span id="count">0</span> / 12</p>
+  <p id="lives">Lives: ❤️❤️❤️❤️❤️</p>
+  <p>Time: <span id="timer">3</span></p>
+</div>
 
 <div class="grid" id="grid"></div>
 
+<!-- 🎵 MUSIC -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b3d6c1e6d.mp3" loop></audio>
+
+<!-- 🔊 EFFECTS -->
+<audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+<audio id="matchSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+<audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
 <script>
-const items = ["🌊", "🌳", "🌸"];
-const gridSize = 5;
-let grid = [];
-let selected = null;
-let score = 0;
+const items=["🌊","🌳","🌸","🍀","🌼","🌵"];
+let grid=[],revealed=[],selected=[];
+let level=1,count=0,lives=5,mistakes=0;
+let timer=3,interval;
 
-function createGrid() {
-  const gridElement = document.getElementById("grid");
-  gridElement.innerHTML = "";
-  grid = [];
+// audio
+let music,clickS,matchS,wrongS;
 
-  for (let i = 0; i < gridSize * gridSize; i++) {
-    const value = items[Math.floor(Math.random() * items.length)];
-    grid.push(value);
+function startGameAudio(){
+  music=document.getElementById("bgMusic");
+  clickS=document.getElementById("clickSound");
+  matchS=document.getElementById("matchSound");
+  wrongS=document.getElementById("wrongSound");
 
-    const cell = document.createElement("div");
-    cell.classList.add("cell");
-    cell.innerText = value;
-    cell.dataset.index = i;
+  music.volume=0.3;
+  music.play();
+}
 
-    cell.addEventListener("click", () => selectCell(i));
+function createGrid(){
+  const g=document.getElementById("grid");
+  g.innerHTML="";
+  grid=[]; revealed=[]; selected=[];
 
-    gridElement.appendChild(cell);
+  for(let i=0;i<25;i++){
+    grid.push(items[Math.floor(Math.random()*items.length)]);
+    revealed.push(false);
+
+    let cell=document.createElement("div");
+    cell.className="cell";
+    cell.innerText="⬜";
+    cell.onclick=()=>clickCell(i);
+
+    g.appendChild(cell);
   }
 }
 
-function selectCell(index) {
-  const cells = document.querySelectorAll(".cell");
+function startTimer(){
+  timer=3;
+  document.getElementById("timer").innerText=timer;
 
-  if (selected === null) {
-    selected = index;
-    cells[index].classList.add("selected");
-  } else {
-    swap(selected, index);
-    cells[selected].classList.remove("selected");
-    selected = null;
-    checkMatches();
-  }
-}
+  interval=setInterval(()=>{
+    timer--;
+    document.getElementById("timer").innerText=timer;
 
-function swap(i1, i2) {
-  let temp = grid[i1];
-  grid[i1] = grid[i2];
-  grid[i2] = temp;
-  updateGrid();
-}
-
-function updateGrid() {
-  const cells = document.querySelectorAll(".cell");
-  cells.forEach((cell, i) => {
-    cell.innerText = grid[i];
-  });
-}
-
-function checkMatches() {
-  for (let i = 0; i < grid.length - 2; i++) {
-    if (grid[i] === grid[i+1] && grid[i] === grid[i+2]) {
-      grid[i] = grid[i+1] = grid[i+2] = randomItem();
-      score += 10;
+    if(timer===0){
+      clearInterval(interval);
+      wrongS.play();
+      loseLife();
+      reset();
     }
-  }
-  document.getElementById("score").innerText = score;
-  updateGrid();
+  },1000);
 }
 
-function randomItem() {
-  return items[Math.floor(Math.random() * items.length)];
+function clickCell(i){
+  if(!clickS) return;
+
+  const cells=document.querySelectorAll(".cell");
+  if(revealed[i]) return;
+
+  clickS.play();
+
+  if(selected.length===0) startTimer();
+
+  revealed[i]=true;
+  cells[i].innerText=grid[i];
+  selected.push(i);
+
+  if(selected.length===3){
+    clearInterval(interval);
+    check();
+  }
+}
+
+function check(){
+  const [a,b,c]=selected;
+
+  if(grid[a]===grid[b] && grid[a]===grid[c]){
+    matchS.play();
+    count++;
+    document.getElementById("count").innerText=count;
+  } else {
+    wrongS.play();
+    mistakes++;
+    loseLife();
+  }
+
+  setTimeout(reset,500);
+
+  if(count>=12){
+    nextLevel();
+  }
+}
+
+function reset(){
+  const cells=document.querySelectorAll(".cell");
+  selected.forEach(i=>{
+    revealed[i]=false;
+    cells[i].innerText="⬜";
+  });
+  selected=[];
+}
+
+function loseLife(){
+  lives--;
+  document.getElementById("lives").innerText="❤️".repeat(lives);
+
+  if(lives<=0){
+    alert("💀 Game Over");
+    location.reload();
+  }
+}
+
+function nextLevel(){
+  level++;
+  count=0;
+  mistakes=0;
+
+  document.getElementById("level").innerText=level;
+  document.getElementById("count").innerText=count;
+
+  if(level>100){
+    alert("🏆 You finished Level 100!");
+    location.reload();
+    return;
+  }
+
+  alert("🌟 Level " + level);
+  createGrid();
 }
 
 createGrid();
