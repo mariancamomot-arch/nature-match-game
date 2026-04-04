@@ -2,52 +2,70 @@
 <html>
 <head>
 <title>Nature Memory Match</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4caf50">
 
 <style>
 body {
-  font-family: Arial;
-  text-align: center;
   margin: 0;
+  font-family: Arial;
   background: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470') no-repeat center center fixed;
   background-size: cover;
 }
 
-/* START SCREEN */
-#startScreen, #winScreen {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: rgba(168,230,207,0.9);
+/* APP CONTAINER */
+#app {
+  max-width: 420px;
+  margin: auto;
+  height: 100vh;
+  background: rgba(255,255,255,0.95);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 
-#winScreen { display: none; }
-
-button {
-  padding: 12px 20px;
-  border-radius: 10px;
-  border: none;
+/* HEADER */
+.header {
   background: #4caf50;
   color: white;
-  margin: 5px;
+  padding: 15px;
+  font-size: 18px;
 }
 
-/* GAME */
-#game {
+/* SCREENS */
+.screen {
+  flex: 1;
   display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
+.active {
+  display: flex;
+}
+
+/* BUTTONS */
+button {
+  padding: 12px 20px;
+  margin: 8px;
+  border: none;
+  border-radius: 10px;
+  background: #4caf50;
+  color: white;
+  font-size: 16px;
+}
+
+/* PANEL */
 .panel {
-  background: rgba(255,255,255,0.9);
+  background: #f5f5f5;
   padding: 10px;
-  border-radius: 15px;
+  border-radius: 10px;
   margin: 10px;
+  font-size: 14px;
 }
 
+/* GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -57,9 +75,9 @@ button {
 
 .cell {
   aspect-ratio: 1;
-  font-size: 28px;
+  font-size: 26px;
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,34 +87,39 @@ button {
 
 <body>
 
-<!-- START -->
-<div id="startScreen">
-  <h1>🌿 Nature Memory Match</h1>
-  <button onclick="startGame()">▶ Start Game</button>
-</div>
+<div id="app">
 
-<!-- WIN SCREEN -->
-<div id="winScreen">
-  <h1>🏆 You Win!</h1>
-  <p>You reached Level 100 🎉</p>
-  <button onclick="restartGame()">🔄 Play Again</button>
+<div class="header">🌿 Nature Match</div>
+
+<!-- START SCREEN -->
+<div id="startScreen" class="screen active">
+  <h2>Nature Memory Match</h2>
+  <button onclick="showGame()">▶ Start Game</button>
 </div>
 
 <!-- GAME -->
-<div id="game">
-  <h2>🌿 Nature Memory Match</h2>
+<div id="gameScreen" class="screen">
 
-  <button onclick="startSound()">🔊 Sound</button>
-  <button onclick="toggleMute()">🔇 Mute</button>
+<button onclick="startSound()">🔊 Sound</button>
+<button onclick="toggleMute()">🔇 Mute</button>
 
-  <div class="panel">
-    <p>Level: <span id="level">1</span></p>
-    <p>Matches: <span id="count">0</span> / 12</p>
-    <p id="lives">Lives: ❤️❤️❤️❤️❤️</p>
-    <p>Time: <span id="timer">3</span></p>
-  </div>
+<div class="panel">
+  Level: <span id="level">1</span> |
+  Matches: <span id="count">0</span>/12 |
+  Lives: <span id="lives">❤️❤️❤️❤️❤️</span> |
+  Time: <span id="timer">3</span>
+</div>
 
-  <div class="grid" id="grid"></div>
+<div class="grid" id="grid"></div>
+
+</div>
+
+<!-- WIN SCREEN -->
+<div id="winScreen" class="screen">
+  <h2>🏆 You Win!</h2>
+  <button onclick="restart()">Play Again</button>
+</div>
+
 </div>
 
 <!-- AUDIO -->
@@ -111,33 +134,25 @@ let grid=[],revealed=[],selected=[];
 let level=1,count=0,lives=5;
 let timer=3,interval;
 
-let music,clickS,matchS,wrongS;
-let isMuted=false;
+let music,clickS,matchS,wrongS,isMuted=false;
 
-/* START */
-function startGame(){
-  document.getElementById("startScreen").style.display="none";
-  document.getElementById("game").style.display="block";
+function showGame(){
+  document.getElementById("startScreen").classList.remove("active");
+  document.getElementById("gameScreen").classList.add("active");
   createGrid();
 }
 
-/* RESTART */
-function restartGame(){
-  location.reload();
-}
+function restart(){ location.reload(); }
 
-/* SOUND */
 function startSound(){
-  music=document.getElementById("bgMusic");
-  clickS=document.getElementById("clickSound");
-  matchS=document.getElementById("matchSound");
-  wrongS=document.getElementById("wrongSound");
-
+  music=bgMusic;
+  clickS=clickSound;
+  matchS=matchSound;
+  wrongS=wrongSound;
   music.volume=0.3;
   music.play();
 }
 
-/* MUTE */
 function toggleMute(){
   isMuted=!isMuted;
   if(music) music.muted=isMuted;
@@ -146,9 +161,8 @@ function toggleMute(){
   if(wrongS) wrongS.muted=isMuted;
 }
 
-/* GRID */
 function createGrid(){
-  const g=document.getElementById("grid");
+  const g=gridEl=document.getElementById("grid");
   g.innerHTML="";
   grid=[]; revealed=[]; selected=[];
 
@@ -165,15 +179,12 @@ function createGrid(){
   }
 }
 
-/* TIMER */
 function startTimer(){
   timer=3;
-  document.getElementById("timer").innerText=timer;
-
+  timerEl.innerText=timer;
   interval=setInterval(()=>{
     timer--;
-    document.getElementById("timer").innerText=timer;
-
+    timerEl.innerText=timer;
     if(timer===0){
       clearInterval(interval);
       wrongS.play();
@@ -183,10 +194,8 @@ function startTimer(){
   },1000);
 }
 
-/* CLICK */
 function clickCell(i){
   if(!clickS) return;
-
   const cells=document.querySelectorAll(".cell");
   if(revealed[i]) return;
 
@@ -204,14 +213,12 @@ function clickCell(i){
   }
 }
 
-/* CHECK */
 function check(){
   const [a,b,c]=selected;
-
-  if(grid[a]===grid[b] && grid[a]===grid[c]){
+  if(grid[a]===grid[b]&&grid[a]===grid[c]){
     matchS.play();
     count++;
-    document.getElementById("count").innerText=count;
+    countEl.innerText=count;
   } else {
     wrongS.play();
     loseLife();
@@ -222,7 +229,6 @@ function check(){
   if(count>=12) nextLevel();
 }
 
-/* RESET */
 function reset(){
   const cells=document.querySelectorAll(".cell");
   selected.forEach(i=>{
@@ -232,33 +238,35 @@ function reset(){
   selected=[];
 }
 
-/* LIFE */
 function loseLife(){
   lives--;
-  document.getElementById("lives").innerText="❤️".repeat(lives);
-
+  livesEl.innerText="❤️".repeat(lives);
   if(lives<=0){
-    alert("💀 Game Over");
+    alert("Game Over");
     location.reload();
   }
 }
 
-/* LEVEL */
 function nextLevel(){
   level++;
   count=0;
-
-  document.getElementById("level").innerText=level;
-  document.getElementById("count").innerText=count;
+  levelEl.innerText=level;
+  countEl.innerText=count;
 
   if(level>100){
-    document.getElementById("game").style.display="none";
-    document.getElementById("winScreen").style.display="flex";
+    gameScreen.classList.remove("active");
+    winScreen.classList.add("active");
     return;
   }
 
   createGrid();
 }
+
+/* shortcuts */
+const levelEl=document.getElementById("level");
+const countEl=document.getElementById("count");
+const livesEl=document.getElementById("lives");
+const timerEl=document.getElementById("timer");
 </script>
 
 </body>
