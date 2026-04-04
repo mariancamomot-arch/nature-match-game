@@ -12,15 +12,34 @@ body {
   margin: 0;
 }
 
-h1 { font-size: 22px; }
+/* START SCREEN */
+#startScreen {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: #a8e6cf;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-button {
-  padding: 10px;
-  margin: 5px;
+#startScreen h1 {
+  font-size: 28px;
+}
+
+#startScreen button {
+  padding: 15px 25px;
+  font-size: 18px;
   border-radius: 10px;
   border: none;
   background: #4caf50;
   color: white;
+}
+
+/* GAME */
+#game {
+  display: none;
 }
 
 .panel {
@@ -52,7 +71,16 @@ button {
 
 <body>
 
-<h1>🌿 Nature Memory Match</h1>
+<!-- START SCREEN -->
+<div id="startScreen">
+  <h1>🌿 Nature Memory Match</h1>
+  <button onclick="startGame()">▶ Start Game</button>
+</div>
+
+<!-- GAME -->
+<div id="game">
+
+<h2>🌿 Nature Memory Match</h2>
 
 <button onclick="startSound()">🔊 Start Sound</button>
 
@@ -65,132 +93,146 @@ button {
 
 <div class="grid" id="grid"></div>
 
-<!-- 🎵 MUSIC -->
-<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b3d6c1e6d.mp3" loop></audio>
+</div>
 
-<!-- 🔊 EFFECTS -->
+<!-- AUDIO -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b3d6c1e6d.mp3" loop></audio>
 <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
 <audio id="matchSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
 <audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
 <script>
 const items = ["🌊","🌳","🌸","🍀","🌼","🌵"];
-let grid = [], revealed = [], selected = [];
+let grid=[],revealed=[],selected=[];
+let level=1,count=0,lives=5;
+let timer=3,interval;
 
-let level = 1, count = 0, lives = 5;
-let timer = 3, interval;
+let music,clickS,matchS,wrongS;
 
-let music, clickS, matchS, wrongS;
+/* START GAME */
+function startGame() {
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  createGrid();
+}
 
+/* SOUND */
 function startSound() {
-  music = document.getElementById("bgMusic");
-  clickS = document.getElementById("clickSound");
-  matchS = document.getElementById("matchSound");
-  wrongS = document.getElementById("wrongSound");
+  music=document.getElementById("bgMusic");
+  clickS=document.getElementById("clickSound");
+  matchS=document.getElementById("matchSound");
+  wrongS=document.getElementById("wrongSound");
 
-  music.volume = 0.3;
+  music.volume=0.3;
   music.play();
 }
 
-function createGrid() {
-  const g = document.getElementById("grid");
-  g.innerHTML = "";
-  grid = []; revealed = []; selected = [];
+/* GRID */
+function createGrid(){
+  const g=document.getElementById("grid");
+  g.innerHTML="";
+  grid=[]; revealed=[]; selected=[];
 
-  for (let i = 0; i < 25; i++) {
-    grid.push(items[Math.floor(Math.random() * items.length)]);
+  for(let i=0;i<25;i++){
+    grid.push(items[Math.floor(Math.random()*items.length)]);
     revealed.push(false);
 
-    let cell = document.createElement("div");
-    cell.className = "cell";
-    cell.innerText = "⬜";
-    cell.onclick = () => clickCell(i);
+    let cell=document.createElement("div");
+    cell.className="cell";
+    cell.innerText="⬜";
+    cell.onclick=()=>clickCell(i);
 
     g.appendChild(cell);
   }
 }
 
-function startTimer() {
-  timer = 3;
-  document.getElementById("timer").innerText = timer;
+/* TIMER */
+function startTimer(){
+  timer=3;
+  document.getElementById("timer").innerText=timer;
 
-  interval = setInterval(() => {
+  interval=setInterval(()=>{
     timer--;
-    document.getElementById("timer").innerText = timer;
+    document.getElementById("timer").innerText=timer;
 
-    if (timer === 0) {
+    if(timer===0){
       clearInterval(interval);
       wrongS.play();
       loseLife();
       reset();
     }
-  }, 1000);
+  },1000);
 }
 
-function clickCell(i) {
-  if (!clickS) return;
+/* CLICK */
+function clickCell(i){
+  if(!clickS) return;
 
-  const cells = document.querySelectorAll(".cell");
-  if (revealed[i]) return;
+  const cells=document.querySelectorAll(".cell");
+  if(revealed[i]) return;
 
   clickS.play();
 
-  if (selected.length === 0) startTimer();
+  if(selected.length===0) startTimer();
 
-  revealed[i] = true;
-  cells[i].innerText = grid[i];
+  revealed[i]=true;
+  cells[i].innerText=grid[i];
   selected.push(i);
 
-  if (selected.length === 3) {
+  if(selected.length===3){
     clearInterval(interval);
     check();
   }
 }
 
-function check() {
-  const [a, b, c] = selected;
+/* CHECK */
+function check(){
+  const [a,b,c]=selected;
 
-  if (grid[a] === grid[b] && grid[a] === grid[c]) {
+  if(grid[a]===grid[b] && grid[a]===grid[c]){
     matchS.play();
     count++;
-    document.getElementById("count").innerText = count;
+    document.getElementById("count").innerText=count;
   } else {
     wrongS.play();
     loseLife();
   }
 
-  setTimeout(reset, 500);
+  setTimeout(reset,500);
 
-  if (count >= 12) nextLevel();
+  if(count>=12) nextLevel();
 }
 
-function reset() {
-  const cells = document.querySelectorAll(".cell");
-  selected.forEach(i => {
-    revealed[i] = false;
-    cells[i].innerText = "⬜";
+/* RESET */
+function reset(){
+  const cells=document.querySelectorAll(".cell");
+  selected.forEach(i=>{
+    revealed[i]=false;
+    cells[i].innerText="⬜";
   });
-  selected = [];
+  selected=[];
 }
 
-function loseLife() {
+/* LIFE */
+function loseLife(){
   lives--;
-  document.getElementById("lives").innerText = "❤️".repeat(lives);
+  document.getElementById("lives").innerText="❤️".repeat(lives);
 
-  if (lives <= 0) {
+  if(lives<=0){
     alert("💀 Game Over");
     location.reload();
   }
 }
 
-function nextLevel() {
+/* LEVEL */
+function nextLevel(){
   level++;
-  count = 0;
+  count=0;
 
-  document.getElementById("level").innerText = level;
-  document.getElementById("count").innerText = count;
+  document.getElementById("level").innerText=level;
+  document.getElementById("count").innerText=count;
 
-  if (level > 100) {
+  if(level>100){
     alert("🏆 You finished Level 100!");
     location.reload();
     return;
@@ -199,8 +241,6 @@ function nextLevel() {
   alert("🌟 Level " + level);
   createGrid();
 }
-
-createGrid();
 </script>
 
 </body>
