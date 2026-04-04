@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Nature Match Game</title>
+<style>
+  body {
+    font-family: Arial;
+    text-align: center;
+    background: #e6f7ff;
+  }
+
+  h1 { margin-top: 20px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 60px);
+    gap: 5px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .cell {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .selected {
+    background: yellow;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>🌿 Nature Match Game</h1>
+<p>Score: <span id="score">0</span></p>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const items = ["🌊", "🌳", "🌸"];
+const gridSize = 5;
+let grid = [];
+let selected = null;
+let score = 0;
+
+function createGrid() {
+  const gridElement = document.getElementById("grid");
+  gridElement.innerHTML = "";
+  grid = [];
+
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    const value = items[Math.floor(Math.random() * items.length)];
+    grid.push(value);
+
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.innerText = value;
+    cell.dataset.index = i;
+
+    cell.addEventListener("click", () => selectCell(i));
+
+    gridElement.appendChild(cell);
+  }
+}
+
+function selectCell(index) {
+  const cells = document.querySelectorAll(".cell");
+
+  if (selected === null) {
+    selected = index;
+    cells[index].classList.add("selected");
+  } else {
+    swap(selected, index);
+    cells[selected].classList.remove("selected");
+    selected = null;
+    checkMatches();
+  }
+}
+
+function swap(i1, i2) {
+  let temp = grid[i1];
+  grid[i1] = grid[i2];
+  grid[i2] = temp;
+  updateGrid();
+}
+
+function updateGrid() {
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach((cell, i) => {
+    cell.innerText = grid[i];
+  });
+}
+
+function checkMatches() {
+  for (let i = 0; i < grid.length - 2; i++) {
+    if (grid[i] === grid[i+1] && grid[i] === grid[i+2]) {
+      grid[i] = grid[i+1] = grid[i+2] = randomItem();
+      score += 10;
+    }
+  }
+  document.getElementById("score").innerText = score;
+  updateGrid();
+}
+
+function randomItem() {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+createGrid();
+</script>
+
+</body>
+</html>
