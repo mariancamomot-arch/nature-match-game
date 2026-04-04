@@ -8,33 +8,32 @@
 body {
   font-family: Arial;
   text-align: center;
-  background: linear-gradient(to bottom, #a8e6cf, #dcedc1);
   margin: 0;
+  background: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470') no-repeat center center fixed;
+  background-size: cover;
 }
 
 /* START SCREEN */
-#startScreen {
+#startScreen, #winScreen {
   position: fixed;
   width: 100%;
   height: 100%;
-  background: #a8e6cf;
+  background: rgba(168,230,207,0.9);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-#startScreen h1 {
-  font-size: 28px;
-}
+#winScreen { display: none; }
 
-#startScreen button {
-  padding: 15px 25px;
-  font-size: 18px;
+button {
+  padding: 12px 20px;
   border-radius: 10px;
   border: none;
   background: #4caf50;
   color: white;
+  margin: 5px;
 }
 
 /* GAME */
@@ -43,7 +42,7 @@ body {
 }
 
 .panel {
-  background: white;
+  background: rgba(255,255,255,0.9);
   padding: 10px;
   border-radius: 15px;
   margin: 10px;
@@ -64,36 +63,40 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<!-- START SCREEN -->
+<!-- START -->
 <div id="startScreen">
   <h1>🌿 Nature Memory Match</h1>
   <button onclick="startGame()">▶ Start Game</button>
 </div>
 
-<!-- GAME -->
-<div id="game">
-
-<h2>🌿 Nature Memory Match</h2>
-
-<button onclick="startSound()">🔊 Start Sound</button>
-<button onclick="toggleMute()">🔇 Mute</button>
-
-<div class="panel">
-  <p>Level: <span id="level">1</span></p>
-  <p>Matches: <span id="count">0</span> / 12</p>
-  <p id="lives">Lives: ❤️❤️❤️❤️❤️</p>
-  <p>Time: <span id="timer">3</span></p>
+<!-- WIN SCREEN -->
+<div id="winScreen">
+  <h1>🏆 You Win!</h1>
+  <p>You reached Level 100 🎉</p>
+  <button onclick="restartGame()">🔄 Play Again</button>
 </div>
 
-<div class="grid" id="grid"></div>
+<!-- GAME -->
+<div id="game">
+  <h2>🌿 Nature Memory Match</h2>
 
+  <button onclick="startSound()">🔊 Sound</button>
+  <button onclick="toggleMute()">🔇 Mute</button>
+
+  <div class="panel">
+    <p>Level: <span id="level">1</span></p>
+    <p>Matches: <span id="count">0</span> / 12</p>
+    <p id="lives">Lives: ❤️❤️❤️❤️❤️</p>
+    <p>Time: <span id="timer">3</span></p>
+  </div>
+
+  <div class="grid" id="grid"></div>
 </div>
 
 <!-- AUDIO -->
@@ -103,23 +106,28 @@ body {
 <audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
 <script>
-const items = ["🌊","🌳","🌸","🍀","🌼","🌵"];
+const items=["🌊","🌳","🌸","🍀","🌼","🌵"];
 let grid=[],revealed=[],selected=[];
 let level=1,count=0,lives=5;
 let timer=3,interval;
 
 let music,clickS,matchS,wrongS;
-let isMuted = false;
+let isMuted=false;
 
-/* START GAME */
-function startGame() {
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("game").style.display = "block";
+/* START */
+function startGame(){
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("game").style.display="block";
   createGrid();
 }
 
+/* RESTART */
+function restartGame(){
+  location.reload();
+}
+
 /* SOUND */
-function startSound() {
+function startSound(){
   music=document.getElementById("bgMusic");
   clickS=document.getElementById("clickSound");
   matchS=document.getElementById("matchSound");
@@ -130,13 +138,12 @@ function startSound() {
 }
 
 /* MUTE */
-function toggleMute() {
-  isMuted = !isMuted;
-
-  if (music) music.muted = isMuted;
-  if (clickS) clickS.muted = isMuted;
-  if (matchS) matchS.muted = isMuted;
-  if (wrongS) wrongS.muted = isMuted;
+function toggleMute(){
+  isMuted=!isMuted;
+  if(music) music.muted=isMuted;
+  if(clickS) clickS.muted=isMuted;
+  if(matchS) matchS.muted=isMuted;
+  if(wrongS) wrongS.muted=isMuted;
 }
 
 /* GRID */
@@ -245,12 +252,11 @@ function nextLevel(){
   document.getElementById("count").innerText=count;
 
   if(level>100){
-    alert("🏆 You finished Level 100!");
-    location.reload();
+    document.getElementById("game").style.display="none";
+    document.getElementById("winScreen").style.display="flex";
     return;
   }
 
-  alert("🌟 Level " + level);
   createGrid();
 }
 </script>
