@@ -83,6 +83,7 @@ body {
 <h2>🌿 Nature Memory Match</h2>
 
 <button onclick="startSound()">🔊 Start Sound</button>
+<button onclick="toggleMute()">🔇 Mute</button>
 
 <div class="panel">
   <p>Level: <span id="level">1</span></p>
@@ -108,6 +109,7 @@ let level=1,count=0,lives=5;
 let timer=3,interval;
 
 let music,clickS,matchS,wrongS;
+let isMuted = false;
 
 /* START GAME */
 function startGame() {
@@ -125,6 +127,16 @@ function startSound() {
 
   music.volume=0.3;
   music.play();
+}
+
+/* MUTE */
+function toggleMute() {
+  isMuted = !isMuted;
+
+  if (music) music.muted = isMuted;
+  if (clickS) clickS.muted = isMuted;
+  if (matchS) matchS.muted = isMuted;
+  if (wrongS) wrongS.muted = isMuted;
 }
 
 /* GRID */
