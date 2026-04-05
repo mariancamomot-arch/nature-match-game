@@ -28,25 +28,6 @@ body {
   padding: 15px;
 }
 
-.screen {
-  flex: 1;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-
-.active { display: flex; }
-
-button {
-  padding: 12px;
-  margin: 8px;
-  border-radius: 10px;
-  border: none;
-  background: #4caf50;
-  color: white;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -63,6 +44,15 @@ button {
   align-items: center;
   justify-content: center;
 }
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
+  border: none;
+  background: #4caf50;
+  color: white;
+}
 </style>
 </head>
 
@@ -72,17 +62,12 @@ button {
 
 <div class="header">🌿 Easy Nature Match</div>
 
-<div id="startScreen" class="screen active">
-  <h2>Easy Mode</h2>
-  <button onclick="startGame()">Start</button>
-</div>
+<p>Lives: <span id="lives">❤️❤️❤️❤️❤️❤️❤️</span></p>
+<p>Matches: <span id="count">0</span>/12</p>
 
-<div id="gameScreen" class="screen">
-  <p>Lives: <span id="lives">❤️❤️❤️❤️❤️❤️❤️</span></p>
-  <p>Matches: <span id="count">0</span>/12</p>
+<button onclick="resetGame()">🔄 Reset</button>
 
-  <div class="grid" id="grid"></div>
-</div>
+<div class="grid" id="grid"></div>
 
 </div>
 
@@ -91,26 +76,39 @@ const items=["🌊","🌳","🌸","🍀","🌼","🌵"];
 let grid=[],revealed=[],selected=[];
 let lives=7,count=0;
 
-function startGame(){
-  startScreen.classList.remove("active");
-  gameScreen.classList.add("active");
-  createGrid();
-  previewTiles();
+/* SAVE */
+function saveGame(){
+  localStorage.setItem("grid", JSON.stringify(grid));
+  localStorage.setItem("lives", lives);
+  localStorage.setItem("count", count);
 }
 
-/* SHOW ALL FIRST */
-function previewTiles(){
-  const cells=document.querySelectorAll(".cell");
+/* LOAD */
+function loadGame(){
+  const savedGrid = localStorage.getItem("grid");
 
-  cells.forEach((cell,i)=>{
-    cell.innerText=grid[i];
-  });
+  if(savedGrid){
+    grid = JSON.parse(savedGrid);
+    lives = parseInt(localStorage.getItem("lives")) || 7;
+    count = parseInt(localStorage.getItem("count")) || 0;
 
-  setTimeout(()=>{
-    cells.forEach(cell=>cell.innerText="⬜");
-  },3000);
+    drawGrid();
+    updateUI();
+  } else {
+    lives = 7;
+    count = 0;
+    createGrid();
+    previewTiles();
+  }
 }
 
+/* RESET */
+function resetGame(){
+  localStorage.clear();
+  location.reload();
+}
+
+/* GRID */
 function createGrid(){
   const g=document.getElementById("grid");
   g.innerHTML="";
@@ -129,6 +127,38 @@ function createGrid(){
   }
 }
 
+/* DRAW SAVED GRID */
+function drawGrid(){
+  const g=document.getElementById("grid");
+  g.innerHTML="";
+  revealed=[]; selected=[];
+
+  for(let i=0;i<grid.length;i++){
+    revealed.push(false);
+
+    let cell=document.createElement("div");
+    cell.className="cell";
+    cell.innerText="⬜";
+    cell.onclick=()=>clickCell(i);
+
+    g.appendChild(cell);
+  }
+}
+
+/* PREVIEW */
+function previewTiles(){
+  const cells=document.querySelectorAll(".cell");
+
+  cells.forEach((cell,i)=>{
+    cell.innerText=grid[i];
+  });
+
+  setTimeout(()=>{
+    cells.forEach(cell=>cell.innerText="⬜");
+  },3000);
+}
+
+/* CLICK */
 function clickCell(i){
   const cells=document.querySelectorAll(".cell");
   if(revealed[i]) return;
@@ -142,12 +172,12 @@ function clickCell(i){
   }
 }
 
+/* CHECK */
 function check(){
   const [a,b,c]=selected;
 
-  if(grid[a]===grid[b]&&grid[a]===grid[c]){
+  if(grid[a]===grid[b] && grid[a]===grid[c]){
     count++;
-    document.getElementById("count").innerText=count;
   } else {
     loseLife();
   }
@@ -156,10 +186,15 @@ function check(){
 
   if(count>=12){
     alert("Level Complete!");
+    localStorage.clear();
     location.reload();
   }
+
+  saveGame();
+  updateUI();
 }
 
+/* RESET TILES */
 function reset(){
   const cells=document.querySelectorAll(".cell");
   selected.forEach(i=>{
@@ -169,15 +204,26 @@ function reset(){
   selected=[];
 }
 
+/* LIFE */
 function loseLife(){
   lives--;
-  document.getElementById("lives").innerText="❤️".repeat(lives);
-
   if(lives<=0){
     alert("Game Over");
+    localStorage.clear();
     location.reload();
   }
 }
+
+/* UI */
+function updateUI(){
+  document.getElementById("lives").innerText="❤️".repeat(lives);
+  document.getElementById("count").innerText=count;
+}
+
+/* START */
+window.onload = function(){
+  loadGame();
+};
 </script>
 
 </body>
