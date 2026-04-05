@@ -4,22 +4,20 @@
 <title>Nature Memory Match</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#4caf50">
 <link rel="manifest" href="manifest.json">
 
 <style>
 body {
   margin: 0;
   font-family: Arial;
-  background: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470') no-repeat center center fixed;
-  background-size: cover;
+  background: #a8e6cf;
 }
 
 #app {
   max-width: 420px;
   margin: auto;
   height: 100vh;
-  background: rgba(255,255,255,0.95);
+  background: white;
   display: flex;
   flex-direction: column;
 }
@@ -28,7 +26,6 @@ body {
   background: #4caf50;
   color: white;
   padding: 15px;
-  font-size: 18px;
 }
 
 .screen {
@@ -39,25 +36,15 @@ body {
   flex-direction: column;
 }
 
-.active {
-  display: flex;
-}
+.active { display: flex; }
 
 button {
-  padding: 12px 20px;
+  padding: 12px;
   margin: 8px;
-  border: none;
   border-radius: 10px;
+  border: none;
   background: #4caf50;
   color: white;
-}
-
-.panel {
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 10px;
-  font-size: 14px;
 }
 
 .grid {
@@ -70,7 +57,7 @@ button {
 .cell {
   aspect-ratio: 1;
   font-size: 26px;
-  background: white;
+  background: #eee;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -83,76 +70,45 @@ button {
 
 <div id="app">
 
-<div class="header">🌿 Nature Match</div>
+<div class="header">🌿 Easy Nature Match</div>
 
-<!-- START -->
 <div id="startScreen" class="screen active">
-  <h2>Nature Memory Match</h2>
-  <button onclick="showGame()">▶ Start Game</button>
+  <h2>Easy Mode</h2>
+  <button onclick="startGame()">Start</button>
 </div>
 
-<!-- GAME -->
 <div id="gameScreen" class="screen">
+  <p>Lives: <span id="lives">❤️❤️❤️❤️❤️❤️❤️</span></p>
+  <p>Matches: <span id="count">0</span>/12</p>
 
-<button onclick="startSound()">🔊 Sound</button>
-<button onclick="toggleMute()">🔇 Mute</button>
-
-<div class="panel">
-  Level: <span id="level">1</span> |
-  Matches: <span id="count">0</span>/12 |
-  Lives: <span id="lives">❤️❤️❤️❤️❤️</span> |
-  Time: <span id="timer">3</span>
-</div>
-
-<div class="grid" id="grid"></div>
-
-</div>
-
-<!-- WIN -->
-<div id="winScreen" class="screen">
-  <h2>🏆 You Win!</h2>
-  <button onclick="restart()">Play Again</button>
+  <div class="grid" id="grid"></div>
 </div>
 
 </div>
-
-<!-- AUDIO -->
-<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b3d6c1e6d.mp3" loop></audio>
-<audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
-<audio id="matchSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-<audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
 <script>
 const items=["🌊","🌳","🌸","🍀","🌼","🌵"];
 let grid=[],revealed=[],selected=[];
-let level=1,count=0,lives=5;
-let timer=3,interval;
+let lives=7,count=0;
 
-let music,clickS,matchS,wrongS,isMuted=false;
-
-function showGame(){
+function startGame(){
   startScreen.classList.remove("active");
   gameScreen.classList.add("active");
   createGrid();
+  previewTiles();
 }
 
-function restart(){ location.reload(); }
+/* SHOW ALL FIRST */
+function previewTiles(){
+  const cells=document.querySelectorAll(".cell");
 
-function startSound(){
-  music=bgMusic;
-  clickS=clickSound;
-  matchS=matchSound;
-  wrongS=wrongSound;
-  music.volume=0.3;
-  music.play();
-}
+  cells.forEach((cell,i)=>{
+    cell.innerText=grid[i];
+  });
 
-function toggleMute(){
-  isMuted=!isMuted;
-  if(music) music.muted=isMuted;
-  if(clickS) clickS.muted=isMuted;
-  if(matchS) matchS.muted=isMuted;
-  if(wrongS) wrongS.muted=isMuted;
+  setTimeout(()=>{
+    cells.forEach(cell=>cell.innerText="⬜");
+  },3000);
 }
 
 function createGrid(){
@@ -173,54 +129,35 @@ function createGrid(){
   }
 }
 
-function startTimer(){
-  timer=3;
-  timerEl.innerText=timer;
-  interval=setInterval(()=>{
-    timer--;
-    timerEl.innerText=timer;
-    if(timer===0){
-      clearInterval(interval);
-      wrongS.play();
-      loseLife();
-      reset();
-    }
-  },1000);
-}
-
 function clickCell(i){
-  if(!clickS) return;
   const cells=document.querySelectorAll(".cell");
   if(revealed[i]) return;
-
-  clickS.play();
-
-  if(selected.length===0) startTimer();
 
   revealed[i]=true;
   cells[i].innerText=grid[i];
   selected.push(i);
 
   if(selected.length===3){
-    clearInterval(interval);
     check();
   }
 }
 
 function check(){
   const [a,b,c]=selected;
+
   if(grid[a]===grid[b]&&grid[a]===grid[c]){
-    matchS.play();
     count++;
-    countEl.innerText=count;
+    document.getElementById("count").innerText=count;
   } else {
-    wrongS.play();
     loseLife();
   }
 
   setTimeout(reset,500);
 
-  if(count>=12) nextLevel();
+  if(count>=12){
+    alert("Level Complete!");
+    location.reload();
+  }
 }
 
 function reset(){
@@ -234,36 +171,12 @@ function reset(){
 
 function loseLife(){
   lives--;
-  livesEl.innerText="❤️".repeat(lives);
+  document.getElementById("lives").innerText="❤️".repeat(lives);
+
   if(lives<=0){
     alert("Game Over");
     location.reload();
   }
-}
-
-function nextLevel(){
-  level++;
-  count=0;
-  levelEl.innerText=level;
-  countEl.innerText=count;
-
-  if(level>100){
-    gameScreen.classList.remove("active");
-    winScreen.classList.add("active");
-    return;
-  }
-
-  createGrid();
-}
-
-const levelEl=document.getElementById("level");
-const countEl=document.getElementById("count");
-const livesEl=document.getElementById("lives");
-const timerEl=document.getElementById("timer");
-
-/* SERVICE WORKER */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
 }
 </script>
 
