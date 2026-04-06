@@ -1,116 +1,206 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-<title>Nature Match Game</title>
-
-<!-- ✅ GOOGLE ANALYTICS -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3893ZHGBMH"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-
-gtag('config', 'G-3893ZHGBMH');
-</script>
+<title>Nature Memory Match</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  background:#0b3d2e;
-  color:white;
-  text-align:center;
-  font-family:Arial;
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to bottom, #a8e6cf, #dcedc1);
+  margin: 0;
+}
+
+h1 { font-size: 22px; }
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
+  border: none;
+  background: #4caf50;
+  color: white;
+}
+
+.panel {
+  background: white;
+  padding: 10px;
+  border-radius: 15px;
+  margin: 10px;
 }
 
 .grid {
-  display:grid;
-  grid-template-columns:repeat(4,80px);
-  gap:8px;
-  justify-content:center;
-  margin-top:20px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  padding: 10px;
 }
 
-.card {
-  width:80px;
-  height:80px;
-  background:#145a32;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  font-size:22px;
-}
-
-.matched {
-  background:#27ae60;
+.cell {
+  aspect-ratio: 1;
+  font-size: 28px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🌿 Nature Match Game</h1>
-<p>Score: <span id="score">0</span></p>
+<h1>🌿 Nature Memory Match</h1>
+
+<button onclick="startSound()">🔊 Start Sound</button>
+
+<div class="panel">
+  <p>Level: <span id="level">1</span></p>
+  <p>Matches: <span id="count">0</span> / 12</p>
+  <p id="lives">Lives: ❤️❤️❤️❤️❤️</p>
+  <p>Time: <span id="timer">3</span></p>
+</div>
 
 <div class="grid" id="grid"></div>
 
+<!-- 🎵 MUSIC -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b3d6c1e6d.mp3" loop></audio>
+
+<!-- 🔊 EFFECTS -->
+<audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+<audio id="matchSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+<audio id="wrongSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
 <script>
+const items = ["🌊","🌳","🌸","🍀","🌼","🌵"];
+let grid = [], revealed = [], selected = [];
 
-let score = 0;
+let level = 1, count = 0, lives = 5;
+let timer = 3, interval;
 
-let data = [
-["🌳","Tree"],
-["🌸","Flower"],
-["🌊","Water"],
-["🔥","Fire"]
-];
+let music, clickS, matchS, wrongS;
 
-let cards = [];
-data.forEach(d=>{
-  cards.push(d);
-  cards.push(d);
-});
+function startSound() {
+  music = document.getElementById("bgMusic");
+  clickS = document.getElementById("clickSound");
+  matchS = document.getElementById("matchSound");
+  wrongS = document.getElementById("wrongSound");
 
-cards.sort(()=>0.5-Math.random());
+  music.volume = 0.3;
+  music.play();
+}
 
-let grid = document.getElementById("grid");
+function createGrid() {
+  const g = document.getElementById("grid");
+  g.innerHTML = "";
+  grid = []; revealed = []; selected = [];
 
-cards.forEach(item=>{
-  let div=document.createElement("div");
-  div.className="card";
-  div.dataset.name=item[1];
-  div.innerHTML=item[0];
-  div.onclick=()=>flip(div);
-  grid.appendChild(div);
-});
+  for (let i = 0; i < 25; i++) {
+    grid.push(items[Math.floor(Math.random() * items.length)]);
+    revealed.push(false);
 
-let opened=[];
+    let cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerText = "⬜";
+    cell.onclick = () => clickCell(i);
 
-function flip(card){
-  if(opened.length<2 && !card.classList.contains("matched")){
-    card.innerHTML=card.dataset.name;
-    opened.push(card);
+    g.appendChild(cell);
+  }
+}
 
-    if(opened.length==2){
-      setTimeout(checkMatch,400);
+function startTimer() {
+  timer = 3;
+  document.getElementById("timer").innerText = timer;
+
+  interval = setInterval(() => {
+    timer--;
+    document.getElementById("timer").innerText = timer;
+
+    if (timer === 0) {
+      clearInterval(interval);
+      wrongS.play();
+      loseLife();
+      reset();
     }
+  }, 1000);
+}
+
+function clickCell(i) {
+  if (!clickS) return;
+
+  const cells = document.querySelectorAll(".cell");
+  if (revealed[i]) return;
+
+  clickS.play();
+
+  if (selected.length === 0) startTimer();
+
+  revealed[i] = true;
+  cells[i].innerText = grid[i];
+  selected.push(i);
+
+  if (selected.length === 3) {
+    clearInterval(interval);
+    check();
   }
 }
 
-function checkMatch(){
-  if(opened[0].dataset.name===opened[1].dataset.name){
-    opened.forEach(c=>c.classList.add("matched"));
-    score+=10;
+function check() {
+  const [a, b, c] = selected;
+
+  if (grid[a] === grid[b] && grid[a] === grid[c]) {
+    matchS.play();
+    count++;
+    document.getElementById("count").innerText = count;
   } else {
-    opened.forEach(c=>{
-      c.innerHTML=data.find(d=>d[1]===c.dataset.name)[0];
-    });
+    wrongS.play();
+    loseLife();
   }
 
-  document.getElementById("score").innerText=score;
-  opened=[];
+  setTimeout(reset, 500);
+
+  if (count >= 12) nextLevel();
 }
 
+function reset() {
+  const cells = document.querySelectorAll(".cell");
+  selected.forEach(i => {
+    revealed[i] = false;
+    cells[i].innerText = "⬜";
+  });
+  selected = [];
+}
+
+function loseLife() {
+  lives--;
+  document.getElementById("lives").innerText = "❤️".repeat(lives);
+
+  if (lives <= 0) {
+    alert("💀 Game Over");
+    location.reload();
+  }
+}
+
+function nextLevel() {
+  level++;
+  count = 0;
+
+  document.getElementById("level").innerText = level;
+  document.getElementById("count").innerText = count;
+
+  if (level > 100) {
+    alert("🏆 You finished Level 100!");
+    location.reload();
+    return;
+  }
+
+  alert("🌟 Level " + level);
+  createGrid();
+}
+
+createGrid();
 </script>
 
 </body>
