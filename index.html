@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>Genius Multiplayer</title>
+<title>Nature Match Game</title>
 
-<!-- ✅ GOOGLE ANALYTICS (PASTE HERE) -->
+<!-- ✅ GOOGLE ANALYTICS -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -15,7 +16,7 @@ gtag('config', 'G-XXXXXXX');
 
 <style>
 body {
-  background:black;
+  background:#0b3d2e;
   color:white;
   text-align:center;
   font-family:Arial;
@@ -26,21 +27,89 @@ body {
   grid-template-columns:repeat(4,80px);
   gap:8px;
   justify-content:center;
+  margin-top:20px;
 }
 
 .card {
   width:80px;
   height:80px;
-  background:#111;
+  background:#145a32;
   display:flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
+  font-size:22px;
 }
 
-.matched { background:green; }
+.matched {
+  background:#27ae60;
+}
 
-#leaderboard { margin-top:20px; }
 </style>
-
 </head>
+
+<body>
+
+<h1>🌿 Nature Match Game</h1>
+<p>Score: <span id="score">0</span></p>
+
+<div class="grid" id="grid"></div>
+
+<script>
+
+let score = 0;
+
+let data = [
+["🌳","Tree"],
+["🌸","Flower"],
+["🌊","Water"],
+["🔥","Fire"]
+];
+
+let cards = [];
+data.forEach(d=>{
+  cards.push(d);
+  cards.push(d);
+});
+
+cards.sort(()=>0.5-Math.random());
+
+let grid = document.getElementById("grid");
+
+cards.forEach(item=>{
+  let div=document.createElement("div");
+  div.className="card";
+  div.dataset.name=item[1];
+  div.innerHTML=item[0];
+  div.onclick=()=>flip(div);
+  grid.appendChild(div);
+});
+
+let opened=[];
+
+function flip(card){
+  if(opened.length<2 && !card.classList.contains("matched")){
+    card.innerHTML=card.dataset.name;
+    opened.push(card);
+
+    if(opened.length==2){
+      setTimeout(checkMatch,400);
+    }
+  }
+}
+
+function checkMatch(){
+  if(opened[0].dataset.name===opened[1].dataset.name){
+    opened.forEach(c=>c.classList.add("matched"));
+    score+=10;
+  } else {
+    opened.forEach(c=>{
+      c.innerHTML=data.find(d=>d[1]===c.dataset.name)[0];
+    });
+  }
+
+  document.getElementById("score").innerText=score;
+  opened=[];
+}
+
+</script>
